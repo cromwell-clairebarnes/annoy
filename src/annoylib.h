@@ -205,19 +205,19 @@ template<typename T>
 inline T euclidean_distance(const T* x, const T* y, int f) {
   // Don't use dot-product: avoid catastrophic cancellation in #314.
   T d = 0.0;
-  T c=0;
-  T t=0;
+  T c=0.0;
+  T t=0.0;
   for (int i = 0; i < f; ++i) {
     // added if statement
     if (isnan(*x)||isnan(*y)) {
-        d+=0;
-        t+=1;
+        d+=0.0;
+        t+=1.0;
     }
     else {
         const T tmp=*x - *y;
         d += tmp * tmp;
-        t+=1;
-        c+=1;
+        t+=1.0;
+        c+=1.0;
         }
     ++x;
     ++y;
