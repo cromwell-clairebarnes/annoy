@@ -387,32 +387,6 @@ inline float euclidean_distance<float>(const float* x, const float* y, int f) {
 #endif
 
 
-//Added CB 2021- to account for weighted euclidean if there are NULLS
-
-template<typename T>
-inline T euclidean_distance(const T* x, const T* y, int f) {
-  // Don't use dot-product: avoid catastrophic cancellation in #314.
-  T d = 0.0;
-  T c=0;
-  T t=0;
-  for (int i = 0; i < f; ++i) {
-    // added if statement
-    if (isnan(*x)||isnan(*y)) {
-        d+=0;
-        t+=1;
-    }
-    else {
-        const T tmp=*x - *y;
-        d += tmp * tmp;
-        t+=1;
-        c+=1;
-        }
-    ++x;
-    ++y;
-  }
-  return (c/t)*d;
-}
-
 
 template<typename T>
 inline T get_norm(T* v, int f) {
