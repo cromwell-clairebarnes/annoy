@@ -186,7 +186,7 @@ inline T manhattan_distance(const T* x, const T* y, int f) {
 }
 
 template<typename T>
-inline T euclidean_distance(const T* x, const T* y, int f) {
+inline T _euclidean_distance(const T* x, const T* y, int f) {
   // Don't use dot-product: avoid catastrophic cancellation in #314.
   T d = 0.0;
   for (int i = 0; i < f; ++i) {
@@ -197,6 +197,37 @@ inline T euclidean_distance(const T* x, const T* y, int f) {
   }
   return d;
 }
+
+
+//Added CB 2021- to account for weighted euclidean if there are NULLS
+
+template<typename T>
+inline T euclidean_distance(const T* x, const T* y, int f) {
+  // Don't use dot-product: avoid catastrophic cancellation in #314.
+  T d = 0.0;
+  T c=0;
+  T t=0;
+  for (int i = 0; i < f; ++i) {
+    // added if statement
+    if (isnan(*x)||isnan(*y)) {
+        d+=0;
+        t+=1;
+    }
+    else {
+        const T tmp=*x - *y;
+        d += tmp * tmp;
+        t+=1;
+        c+=1;
+        }
+    ++x;
+    ++y;
+  }
+  return (c/t)*d;
+}
+
+
+
+
 
 #ifdef USE_AVX
 // Horizontal single sum of 256bit vector.
@@ -355,7 +386,34 @@ inline float euclidean_distance<float>(const float* x, const float* y, int f) {
 
 #endif
 
- 
+
+//Added CB 2021- to account for weighted euclidean if there are NULLS
+
+template<typename T>
+inline T euclidean_distance(const T* x, const T* y, int f) {
+  // Don't use dot-product: avoid catastrophic cancellation in #314.
+  T d = 0.0;
+  T c=0;
+  T t=0;
+  for (int i = 0; i < f; ++i) {
+    // added if statement
+    if (isnan(*x)||isnan(*y)) {
+        d+=0;
+        t+=1;
+    }
+    else {
+        const T tmp=*x - *y;
+        d += tmp * tmp;
+        t+=1;
+        c+=1;
+        }
+    ++x;
+    ++y;
+  }
+  return (c/t)*d;
+}
+
+
 template<typename T>
 inline T get_norm(T* v, int f) {
   return sqrt(dot(v, v, f));
@@ -367,7 +425,7 @@ inline void two_means(const vector<Node*>& nodes, int f, Random& random, bool co
     This algorithm is a huge heuristic. Empirically it works really well, but I
     can't motivate it well. The basic idea is to keep two centroids and assign
     points to either one of them. We weight each centroid by the number of points
-    assigned to it, so to balance it. 
+    assigned to it, so to balance it.
   */
   static int iteration_steps = 200;
   size_t count = nodes.size();
@@ -557,7 +615,7 @@ struct DotProduct : Angular {
   static inline void create_split(const vector<Node<S, T>*>& nodes, int f, size_t s, Random& random, Node<S, T>* n) {
     Node<S, T>* p = (Node<S, T>*)alloca(s);
     Node<S, T>* q = (Node<S, T>*)alloca(s);
-    DotProduct::zero_value(p); 
+    DotProduct::zero_value(p);
     DotProduct::zero_value(q);
     two_means<T, Random, DotProduct, Node<S, T> >(nodes, f, random, true, p, q);
     for (int z = 0; z < f; z++)
@@ -761,7 +819,7 @@ struct Minkowski : Base {
 struct Euclidean : Minkowski {
   template<typename S, typename T>
   static inline T distance(const Node<S, T>* x, const Node<S, T>* y, int f) {
-    return euclidean_distance(x->v, y->v, f);    
+    return euclidean_distance(x->v, y->v, f);
   }
   template<typename S, typename T, typename Random>
   static inline void create_split(const vector<Node<S, T>*>& nodes, int f, size_t s, Random& random, Node<S, T>* n) {
@@ -842,7 +900,7 @@ class AnnoyIndexInterface {
 };
 
 template<typename S, typename T, typename Distance, typename Random, class ThreadedBuildPolicy>
-  class AnnoyIndex : public AnnoyIndexInterface<S, T, 
+  class AnnoyIndex : public AnnoyIndexInterface<S, T,
 #if __cplusplus >= 201103L
     typename std::remove_const<decltype(Random::default_seed)>::type
 #else
@@ -926,7 +984,7 @@ public:
 
     return true;
   }
-    
+
   bool on_disk_build(const char* file, char** error=NULL) {
     _on_disk = true;
     _fd = open(file, O_RDWR | O_CREAT | O_TRUNC, (int) 0600);
@@ -947,7 +1005,7 @@ public:
 #endif
     return true;
   }
-    
+
   bool build(int q, int n_threads=-1, char** error=NULL) {
     if (_loaded) {
       set_error_from_string(error, "You can't build a loaded index");
@@ -973,7 +1031,7 @@ public:
     _n_nodes += _roots.size();
 
     if (_verbose) showUpdate("has %d nodes\n", _n_nodes);
-    
+
     if (_on_disk) {
       if (!remap_memory_and_truncate(&_nodes, _fd,
           static_cast<size_t>(_s) * static_cast<size_t>(_nodes_size),
@@ -987,7 +1045,7 @@ public:
     _built = true;
     return true;
   }
-  
+
   bool unbuild(char** error=NULL) {
     if (_loaded) {
       set_error_from_string(error, "You can't unbuild a loaded index");
@@ -1195,18 +1253,18 @@ protected:
     const double reallocation_factor = 1.3;
     S new_nodes_size = std::max(n, (S) ((_nodes_size + 1) * reallocation_factor));
     void *old = _nodes;
-    
+
     if (_on_disk) {
-      if (!remap_memory_and_truncate(&_nodes, _fd, 
-          static_cast<size_t>(_s) * static_cast<size_t>(_nodes_size), 
-          static_cast<size_t>(_s) * static_cast<size_t>(new_nodes_size)) && 
+      if (!remap_memory_and_truncate(&_nodes, _fd,
+          static_cast<size_t>(_s) * static_cast<size_t>(_nodes_size),
+          static_cast<size_t>(_s) * static_cast<size_t>(new_nodes_size)) &&
           _verbose)
           showUpdate("File truncation error\n");
     } else {
       _nodes = realloc(_nodes, _s * new_nodes_size);
       memset((char *) _nodes + (_nodes_size * _s) / sizeof(char), 0, (new_nodes_size - _nodes_size) * _s);
     }
-    
+
     _nodes_size = new_nodes_size;
     if (_verbose) showUpdate("Reallocating to %d nodes: old_address=%p, new_address=%p\n", new_nodes_size, old, _nodes);
   }
@@ -1380,7 +1438,7 @@ protected:
     vector<pair<T, S> > nns_dist;
     S last = -1;
     for (size_t i = 0; i < nns.size(); i++) {
-      S j = nns[i]; 
+      S j = nns[i];
       if (j == last)
         continue;
       last = j;
