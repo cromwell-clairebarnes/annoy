@@ -222,7 +222,7 @@ inline T euclidean_distance(const T* x, const T* y, int f) {
     ++x;
     ++y;
   }
-  return (c/t)*d;
+  return (t/c)*d;
 }
 
 
