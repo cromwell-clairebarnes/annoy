@@ -92,6 +92,4 @@
 %feature("notabstract") GoAnnoyIndexEuclidean;
 %feature("notabstract") GoAnnoyIndexManhattan;
 %feature("notabstract") GoAnnoyIndexDotProduct;
-
-
-
+%feature("notabstract") GoAnnoyIndex_Euclidean;

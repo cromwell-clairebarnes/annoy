@@ -310,6 +310,32 @@ inline float euclidean_distance<float>(const float* x, const float* y, int f) {
   return result;
 }
 
+template<>
+inline float _euclidean_distance<float>(const float* x, const float* y, int f) {
+  float result=0;
+  if (f > 7) {
+    __m256 d = _mm256_setzero_ps();
+    for (; f > 7; f -= 8) {
+      const __m256 diff = _mm256_sub_ps(_mm256_loadu_ps(x), _mm256_loadu_ps(y));
+      d = _mm256_add_ps(d, _mm256_mul_ps(diff, diff)); // no support for fmadd in AVX...
+      x += 8;
+      y += 8;
+    }
+    // Sum all floats in dot register.
+    result = hsum256_ps_avx(d);
+  }
+  // Don't forget the remaining values.
+  for (; f > 0; f--) {
+    float tmp = *x - *y;
+    result += tmp * tmp;
+    x++;
+    y++;
+  }
+  return result;
+}
+
+
+
 #endif
 
 #ifdef USE_AVX512
@@ -383,6 +409,34 @@ inline float euclidean_distance<float>(const float* x, const float* y, int f) {
   }
   return result;
 }
+
+
+
+template<>
+inline float _euclidean_distance<float>(const float* x, const float* y, int f) {
+  float result=0;
+  if (f > 15) {
+    __m512 d = _mm512_setzero_ps();
+    for (; f > 15; f -= 16) {
+      const __m512 diff = _mm512_sub_ps(_mm512_loadu_ps(x), _mm512_loadu_ps(y));
+      d = _mm512_fmadd_ps(diff, diff, d);
+      x += 16;
+      y += 16;
+    }
+    // Sum all floats in dot register.
+    result = _mm512_reduce_add_ps(d);
+  }
+  // Don't forget the remaining values.
+  for (; f > 0; f--) {
+    float tmp = *x - *y;
+    result += tmp * tmp;
+    x++;
+    y++;
+  }
+  return result;
+}
+
+
 
 #endif
 
@@ -820,6 +874,43 @@ struct Euclidean : Minkowski {
   }
 
 };
+
+
+
+
+struct _Euclidean : Minkowski {
+  template<typename S, typename T>
+  static inline T distance(const Node<S, T>* x, const Node<S, T>* y, int f) {
+    return _euclidean_distance(x->v, y->v, f);
+  }
+  template<typename S, typename T, typename Random>
+  static inline void create_split(const vector<Node<S, T>*>& nodes, int f, size_t s, Random& random, Node<S, T>* n) {
+    Node<S, T>* p = (Node<S, T>*)alloca(s);
+    Node<S, T>* q = (Node<S, T>*)alloca(s);
+    two_means<T, Random, _Euclidean, Node<S, T> >(nodes, f, random, false, p, q);
+
+    for (int z = 0; z < f; z++)
+      n->v[z] = p->v[z] - q->v[z];
+    Base::normalize<T, Node<S, T> >(n, f);
+    n->a = 0.0;
+    for (int z = 0; z < f; z++)
+      n->a += -n->v[z] * (p->v[z] + q->v[z]) / 2;
+  }
+  template<typename T>
+  static inline T normalized_distance(T distance) {
+    return sqrt(std::max(distance, T(0)));
+  }
+  template<typename S, typename T>
+  static inline void init_node(Node<S, T>* n, int f) {
+  }
+  static const char* name() {
+    return "_euclidean";
+  }
+
+};
+
+
+
 
 struct Manhattan : Minkowski {
   template<typename S, typename T>
