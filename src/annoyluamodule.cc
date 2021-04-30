@@ -301,6 +301,9 @@ static int lua_an_make(lua_State* L) {
   }else if (strcmp(metric, "weighted_euclidean") == 0) {
     LuaAnnoy<Weighted_Euclidean>::createNew(L, f);
     return 1;
+  }else if (strcmp(metric, "normalised_weighted_euclidean") == 0) {
+    LuaAnnoy<Normalised_Weighted_Euclidean>::createNew(L, f);
+    return 1;
   }  else {
     return luaL_error(L, "Unknown metric: %s", metric);
   }

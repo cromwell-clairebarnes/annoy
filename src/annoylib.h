@@ -257,17 +257,19 @@ inline T normalised_weighted_euclidean_distance(const T* x, const T* y, int f) {
 
     }
     else {
-        const T tmp=(*x) * (*y);
+        const T tmp=(*x)* (*y);
         d += tmp;
-        a+= (*x) * (*x);
-        b+= (*y) * (*y);
+        const T tmpa=(*x) * (*x);
+        a+= tmpa;
+        const T tmpb=(*y) * (*y);
+        b+= tmpb;
         t+=1.0;
         c+=1.0;
         }
     ++x;
     ++y;
   }
-  return (t/c)*(1-(d/sqrt(a *b)));
+  return (t/c)*(1-(d/sqrt((a * b))));
 }
 
 
@@ -952,6 +954,37 @@ struct Weighted_Euclidean : Minkowski {
 
 };
 
+
+struct Normalised_Weighted_Euclidean : Minkowski {
+  template<typename S, typename T>
+  static inline T distance(const Node<S, T>* x, const Node<S, T>* y, int f) {
+    return normalised_weighted_euclidean_distance(x->v, y->v, f);
+  }
+  template<typename S, typename T, typename Random>
+  static inline void create_split(const vector<Node<S, T>*>& nodes, int f, size_t s, Random& random, Node<S, T>* n) {
+    Node<S, T>* p = (Node<S, T>*)alloca(s);
+    Node<S, T>* q = (Node<S, T>*)alloca(s);
+    two_means<T, Random, Normalised_Weighted_Euclidean, Node<S, T> >(nodes, f, random, false, p, q);
+
+    for (int z = 0; z < f; z++)
+      n->v[z] = p->v[z] - q->v[z];
+    Base::normalize<T, Node<S, T> >(n, f);
+    n->a = 0.0;
+    for (int z = 0; z < f; z++)
+      n->a += -n->v[z] * (p->v[z] + q->v[z]) / 2;
+  }
+  template<typename T>
+  static inline T normalized_distance(T distance) {
+    return sqrt(std::max(distance, T(0)));
+  }
+  template<typename S, typename T>
+  static inline void init_node(Node<S, T>* n, int f) {
+  }
+  static const char* name() {
+    return "normalised_weighted_euclidean";
+  }
+
+};
 
 
 
