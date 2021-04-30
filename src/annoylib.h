@@ -186,7 +186,7 @@ inline T manhattan_distance(const T* x, const T* y, int f) {
 }
 
 template<typename T>
-inline T euclidean_distance(const T* x, const T* y, int f) {
+inline T _euclidean_distance(const T* x, const T* y, int f) {
   // Don't use dot-product: avoid catastrophic cancellation in #314.
   T d = 0.0;
   for (int i = 0; i < f; ++i) {
@@ -202,14 +202,18 @@ inline T euclidean_distance(const T* x, const T* y, int f) {
 //Added CB 2021- to account for weighted euclidean if there are NULLS
 
 template<typename T>
-inline T _euclidean_distance(const T* x, const T* y, int f) {
+inline T __euclidean_distance(const T* x, const T* y, int f) {
   // Don't use dot-product: avoid catastrophic cancellation in #314.
   T d = 0.0;
   T c=0.0;
   T t=0.0;
   for (int i = 0; i < f; ++i) {
     // added if statement
-    if (isnan(*x)||isnan(*y)) {
+    if (isnan(*x)&&isnan(*y)){
+        d+=0.0;
+        t+=0.0;
+    }
+    else if (isnan(*x)||isnan(*y)) {
         d+=0.0;
         t+=1.0;
     }
@@ -226,6 +230,45 @@ inline T _euclidean_distance(const T* x, const T* y, int f) {
 }
 
 
+//Added CB 2021- to account for normalised weighted euclidean (angular but weighted) if there are NULLS
+
+template<typename T>
+inline T euclidean_distance(const T* x, const T* y, int f) {
+  // Don't use dot-product: avoid catastrophic cancellation in #314.
+  T d = 0.0;
+  T c=0.0;
+  T t=0.0;
+  T a=0.0;
+  T b=0.0;
+
+  for (int i = 0; i < f; ++i) {
+    // added if statement
+    if (isnan(*x)&&isnan(*y)){
+        d+=0.0;
+        t+=0.0;
+        a+=0.0;
+        b+=0.0;
+    }
+    else if (!isnan(*x)||isnan(*y)) {
+        d+=0.0;
+        t+=1.0;
+        a+=0.0;
+        b+=0.0;
+
+    }
+    else {
+        const T tmp=(*x) * (*y);
+        d += tmp;
+        a+= (*x) * (*x);
+        b+= (*y) * (*y);
+        t+=1.0;
+        c+=1.0;
+        }
+    ++x;
+    ++y;
+  }
+  return (t/c)*(1-(d/sqrt(a *b)));
+}
 
 
 
