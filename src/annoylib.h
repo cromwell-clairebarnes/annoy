@@ -186,7 +186,7 @@ inline T manhattan_distance(const T* x, const T* y, int f) {
 }
 
 template<typename T>
-inline T _euclidean_distance(const T* x, const T* y, int f) {
+inline T euclidean_distance(const T* x, const T* y, int f) {
   // Don't use dot-product: avoid catastrophic cancellation in #314.
   T d = 0.0;
   for (int i = 0; i < f; ++i) {
@@ -202,7 +202,7 @@ inline T _euclidean_distance(const T* x, const T* y, int f) {
 //Added CB 2021- to account for weighted euclidean if there are NULLS
 
 template<typename T>
-inline T __euclidean_distance(const T* x, const T* y, int f) {
+inline T weighted_euclidean_distance(const T* x, const T* y, int f) {
   // Don't use dot-product: avoid catastrophic cancellation in #314.
   T d = 0.0;
   T c=0.0;
@@ -233,7 +233,7 @@ inline T __euclidean_distance(const T* x, const T* y, int f) {
 //Added CB 2021- to account for normalised weighted euclidean (angular but weighted) if there are NULLS
 
 template<typename T>
-inline T euclidean_distance(const T* x, const T* y, int f) {
+inline T normalised_weighted_euclidean_distance(const T* x, const T* y, int f) {
   // Don't use dot-product: avoid catastrophic cancellation in #314.
   T d = 0.0;
   T c=0.0;
@@ -354,7 +354,7 @@ inline float euclidean_distance<float>(const float* x, const float* y, int f) {
 }
 
 template<>
-inline float _euclidean_distance<float>(const float* x, const float* y, int f) {
+inline float weighted_euclidean_distance<float>(const float* x, const float* y, int f) {
   float result=0;
   if (f > 7) {
     __m256 d = _mm256_setzero_ps();
@@ -456,7 +456,7 @@ inline float euclidean_distance<float>(const float* x, const float* y, int f) {
 
 
 template<>
-inline float _euclidean_distance<float>(const float* x, const float* y, int f) {
+inline float weighted_euclidean_distance<float>(const float* x, const float* y, int f) {
   float result=0;
   if (f > 15) {
     __m512 d = _mm512_setzero_ps();
@@ -921,16 +921,16 @@ struct Euclidean : Minkowski {
 
 
 
-struct _Euclidean : Minkowski {
+struct Weighted_Euclidean : Minkowski {
   template<typename S, typename T>
   static inline T distance(const Node<S, T>* x, const Node<S, T>* y, int f) {
-    return _euclidean_distance(x->v, y->v, f);
+    return weighted_euclidean_distance(x->v, y->v, f);
   }
   template<typename S, typename T, typename Random>
   static inline void create_split(const vector<Node<S, T>*>& nodes, int f, size_t s, Random& random, Node<S, T>* n) {
     Node<S, T>* p = (Node<S, T>*)alloca(s);
     Node<S, T>* q = (Node<S, T>*)alloca(s);
-    two_means<T, Random, _Euclidean, Node<S, T> >(nodes, f, random, false, p, q);
+    two_means<T, Random, Weighted_Euclidean, Node<S, T> >(nodes, f, random, false, p, q);
 
     for (int z = 0; z < f; z++)
       n->v[z] = p->v[z] - q->v[z];
@@ -947,7 +947,7 @@ struct _Euclidean : Minkowski {
   static inline void init_node(Node<S, T>* n, int f) {
   }
   static const char* name() {
-    return "_euclidean";
+    return "weighted_euclidean";
   }
 
 };

@@ -81,10 +81,10 @@ class AnnoyIndexEuclidean : public AnnoyIndex {
     this->f = f;
   }
 };
-class AnnoyIndex_Euclidean : public AnnoyIndex {
+class AnnoyIndexWeighted_Euclidean : public AnnoyIndex {
  public:
-  AnnoyIndex_Euclidean(int f) {
-    ptr = new ::AnnoyIndex<int32_t, float, ::_Euclidean, ::Kiss64Random, AnnoyIndexSingleThreadedBuildPolicy>(f);
+  AnnoyIndexWeighted_Euclidean(int f) {
+    ptr = new ::AnnoyIndex<int32_t, float, ::Weighted_Euclidean, ::Kiss64Random, AnnoyIndexSingleThreadedBuildPolicy>(f);
     this->f = f;
   }
 };
