@@ -163,7 +163,7 @@ py_an_new(PyTypeObject *type, PyObject *args, PyObject *kwargs) {
     self->ptr = new AnnoyIndex<int32_t, float, DotProduct, Kiss64Random, AnnoyIndexThreadedBuildPolicy>(self->f);
   }  else if (!strcmp(metric, "weighted_euclidean")) {
       self->ptr = new AnnoyIndex<int32_t, float, Weighted_Euclidean, Kiss64Random, AnnoyIndexThreadedBuildPolicy>(self->f);
-  }  else if (!strcmp(metric, "mormalised_weighted_euclidean")) {
+  }  else if (!strcmp(metric, "normalised_weighted_euclidean")) {
         self->ptr = new AnnoyIndex<int32_t, float, Normalised_Weighted_Euclidean, Kiss64Random, AnnoyIndexThreadedBuildPolicy>(self->f);
   } else {
     PyErr_SetString(PyExc_ValueError, "No such metric");
