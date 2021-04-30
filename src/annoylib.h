@@ -249,7 +249,7 @@ inline T normalised_weighted_euclidean_distance(const T* x, const T* y, int f) {
         a+=0.0;
         b+=0.0;
     }
-    else if (!isnan(*x)||isnan(*y)) {
+    else if (isnan(*x)||isnan(*y)) {
         d+=0.0;
         t+=1.0;
         a+=0.0;
@@ -257,7 +257,7 @@ inline T normalised_weighted_euclidean_distance(const T* x, const T* y, int f) {
 
     }
     else {
-        const T tmp=(*x)* (*y);
+        const T tmp=(*x) * (*y);
         d += tmp;
         const T tmpa=(*x) * (*x);
         a+= tmpa;
@@ -269,8 +269,7 @@ inline T normalised_weighted_euclidean_distance(const T* x, const T* y, int f) {
     ++x;
     ++y;
   }
-  return a*b
-//  return (t/c)*(1-(d/sqrt((a * b))));
+  return (t/c)*(1-(d/sqrt((a * b))));
 }
 
 
