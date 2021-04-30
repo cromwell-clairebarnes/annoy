@@ -269,7 +269,8 @@ inline T normalised_weighted_euclidean_distance(const T* x, const T* y, int f) {
     ++x;
     ++y;
   }
-  return (t/c)*(1-(d/sqrt((a * b))));
+  return a*b
+//  return (t/c)*(1-(d/sqrt((a * b))));
 }
 
 
