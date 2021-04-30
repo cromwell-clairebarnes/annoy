@@ -259,19 +259,23 @@ inline T normalised_weighted_euclidean_distance(const T* x, const T* y, int f) {
     else {
         const T tmp=(*x) * (*y);
         d += tmp;
-        const T tmpa=(*x) * (*x);
-        a+= tmpa;
-        const T tmpb=(*y) * (*y);
-        b+= tmpb;
+        const T tmpa= *x ;
+        a+= tmpa * tmpa;
+        const T tmpb=*y;
+        b+= tmpb * tmpb;
         t+=1.0;
         c+=1.0;
         }
     ++x;
     ++y;
   }
-  return a * b ;
-
-//  return 2*(t/c)*(1-(d/sqrt((a * b))));
+// if all of the variables are NaN's then give it a stupidly high dimension to return
+  if (t==0){
+      return 100;
+  }
+  else {
+      return 2*(t/c)*(1-(d/sqrt((a * b))));
+}
 }
 
 
