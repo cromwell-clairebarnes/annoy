@@ -238,6 +238,56 @@ inline T normalised_weighted_euclidean_distance(const T* x, const T* y, int f) {
   T d = 0.0;
   T c=0.0;
   T t=0.0;
+  for (int i = 0; i < f; ++i) {
+      // To weight the nlp columns 
+    if ( i < 301) {
+      // added if statement
+      if (isnan(*x)&&isnan(*y)){
+          d+=0.0;
+          t+=0.0;
+      }
+      else if (isnan(*x)||isnan(*y)) {
+          d+=0.0;
+          t+=1.0;
+      }
+      else {
+          const T tmp=*x - *y;
+          d += (1/50) *(tmp * tmp);
+          t+=1.0;
+          c+=1.0;
+          }
+
+    }
+
+    else {
+      // added if statement
+      if (isnan(*x)&&isnan(*y)){
+          d+=0.0;
+          t+=0.0;
+      }
+      else if (isnan(*x)||isnan(*y)) {
+          d+=0.0;
+          t+=1.0;
+      }
+      else {
+          const T tmp=*x - *y;
+          d += tmp * tmp;
+          t+=1.0;
+          c+=1.0;
+          }
+      }
+    ++x;
+    ++y;
+  }
+  return (t/c)*d;
+}
+
+template<typename T>
+inline T _normalised_weighted_euclidean_distance(const T* x, const T* y, int f) {
+  // Don't use dot-product: avoid catastrophic cancellation in #314.
+  T d = 0.0;
+  T c=0.0;
+  T t=0.0;
   T a=0.0;
   T b=0.0;
 
